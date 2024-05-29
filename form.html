@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="PT-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,21 +16,25 @@
             height: 100vh;
             margin: 0;
         }
+
         form {
             background-color: #1f1f1f;
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+
         div {
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
+
         label {
             font-weight: bold;
             margin-bottom: 5px;
         }
+
         input {
             padding: 12px;
             border: 1px solid #ccc;
@@ -38,11 +43,13 @@
             background-color: #2b2b2b;
             color: #eee;
         }
+
         input:focus {
             border-color: #66afe9;
             outline: none;
             box-shadow: 0 0 8px rgba(102, 175, 233, 0.6);
         }
+
         button {
             padding: 12px;
             border: none;
@@ -53,12 +60,15 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
+
         button:hover {
             background-color: #505050;
         }
+
         .datepicker {
             position: relative;
         }
+
         .calendar {
             display: none;
             position: absolute;
@@ -71,182 +81,217 @@
             z-index: 1000;
             padding: 10px;
         }
+
         .calendar table {
             width: 100%;
         }
-        .calendar th, .calendar td {
+
+        .calendar th,
+        .calendar td {
             text-align: center;
             padding: 5px;
-            cursor: pointer;
         }
-        .calendar .prev, .calendar .next {
+
+        .calendar .prev,
+        .calendar .next {
             cursor: pointer;
             font-weight: bold;
-            display: inline-block;
-            width: 20px;
         }
-        .calendar .prev {
-            float: left;
-        }
-        .calendar .next {
-            float: right;
-        }
+
         .calendar .disabled {
             color: #666;
             cursor: not-allowed;
         }
+
         .calendar .active {
             background-color: #66afe9;
             color: #fff;
             border-radius: 50%;
         }
+
+        .year-picker {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .year-picker select {
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: #2b2b2b;
+            color: #eee;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
     </style>
 </head>
+
 <body>
 
-<form onsubmit="return validarFormulario()">
-    <div>
-        <label for="nome">Digite seu nome:</label>
-        <input type="text" id="nome" required>
-        
-        <label for="email">Digite seu email:</label>
-        <input type="email" id="email" required>
-    
-        <label for="dataNascimento">Digite sua data de nascimento:</label>
-        <div class="datepicker">
-            <input type="text" id="dataNascimento" readonly required>
-            <div class="calendar" id="calendar"></div>
-        </div>
-    
-        <button type="submit">Enviar</button>
-    </div>
-</form>
+    <form onsubmit="return validarFormulario()">
+        <div>
+            <label for="nome">Digite seu nome:</label>
+            <input type="text" id="nome" required>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var input = document.getElementById('dataNascimento');
-        var calendar = document.getElementById('calendar');
-        var hoje = new Date();
-        var selectedDate = null;
-        
-        input.addEventListener('focus', function() {
-            calendar.style.display = 'block';
-            renderCalendar(hoje);
-        });
-        
-        input.addEventListener('blur', function() {
-            setTimeout(function() {
-                calendar.style.display = 'none';
-            }, 200);
-        });
-        
-        function renderCalendar(date) {
-            calendar.innerHTML = '';
-            var month = date.getMonth();
-            var year = date.getFullYear();
-            var firstDay = new Date(year, month, 1);
-            var lastDay = new Date(year, month + 1, 0);
-            var daysInMonth = lastDay.getDate();
-            var startDay = firstDay.getDay();
-            var calendarHeader = `
+            <label for="email">Digite seu email:</label>
+            <input type="email" id="email" required>
+
+            <label for="dataNascimento">Digite sua data de nascimento:</label>
+            <div class="datepicker">
+                <input type="text" id="dataNascimento" readonly required>
+                <div class="calendar" id="calendar"></div>
+            </div>
+
+            <button type="submit">Enviar</button>
+        </div>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var input = document.getElementById('dataNascimento');
+            var calendar = document.getElementById('calendar');
+            var hoje = new Date();
+            var selectedDate = null;
+            var selectedYear = hoje.getFullYear();
+
+            input.addEventListener('focus', function () {
+                calendar.style.display = 'block';
+                renderCalendar(hoje);
+                renderYearPicker();
+            });
+
+            function renderCalendar(date) {
+                calendar.innerHTML = '';
+                var month = date.getMonth();
+                var year = date.getFullYear();
+                var firstDay = new Date(year, month, 1);
+                var lastDay = new Date(year, month + 1, 0);
+                var daysInMonth = lastDay.getDate();
+                var startDay = firstDay.getDay();
+                var calendarHeader = `
                 <div>
                     <span class="prev" onclick="prevMonth()">&#9664;</span>
                     <span>${date.toLocaleString('default', { month: 'long' })} ${year}</span>
                     <span class="next" onclick="nextMonth()">&#9654;</span>
                 </div>
             `;
-            var calendarBody = '<table><thead><tr>';
-            var daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-            for (var day of daysOfWeek) {
-                calendarBody += `<th>${day}</th>`;
-            }
-            calendarBody += '</tr></thead><tbody><tr>';
-            for (var i = 0; i < startDay; i++) {
-                calendarBody += '<td></td>';
-            }
-            for (var day = 1; day <= daysInMonth; day++) {
-                var currentDate = new Date(year, month, day);
-                var classList = '';
-                if (currentDate > hoje) {
-                    classList = 'disabled';
+                var calendarBody = '<table><thead><tr>';
+                var daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                for (var day of daysOfWeek) {
+                    calendarBody += `<th>${day}</th>`;
                 }
-                if (selectedDate && currentDate.toDateString() === selectedDate.toDateString()) {
-                    classList += ' active';
+                calendarBody += '</tr></thead><tbody><tr>';
+                for (var i = 0; i < startDay; i++) {
+                    calendarBody += '<td></td>';
                 }
-                calendarBody += `<td class="${classList}" onclick="selectDate(${day}, ${month}, ${year})">${day}</td>`;
-                if ((startDay + day) % 7 == 0 && day != daysInMonth) {
-                    calendarBody += '</tr><tr>';
+                for (var day = 1; day <= daysInMonth; day++) {
+                    var currentDate = new Date(year, month, day);
+                    var classList = '';
+                    if (currentDate > hoje) {
+                        classList = 'disabled';
+                    }
+                    if (selectedDate && currentDate.toDateString() === selectedDate.toDateString()) {
+                        classList += ' active';
+                    }
+                    calendarBody += `<td class="${classList}" onclick="selectDate(${day}, ${month}, ${year})">${day}</td>`;
+                    if ((startDay + day) % 7 == 0 && day != daysInMonth) {
+                        calendarBody += '</tr><tr>';
+                    }
                 }
+                calendarBody += '</tr></tbody></table>';
+                calendar.innerHTML = calendarHeader + calendarBody;
             }
-            calendarBody += '</tr></tbody></table>';
-            calendar.innerHTML = calendarHeader + calendarBody;
-        }
-        
-        window.prevMonth = function() {
-            var currentMonth = hoje.getMonth();
-            hoje.setMonth(currentMonth - 1);
-            renderCalendar(hoje);
-        };
-        
-        window.nextMonth = function() {
-            var currentMonth = hoje.getMonth();
-            hoje.setMonth(currentMonth + 1);
-            renderCalendar(hoje);
-        };
-        
-        window.selectDate = function(day, month, year) {
-            var selectedDate = new Date(year, month, day);
-            if (selectedDate <= new Date()) {
-                input.value = selectedDate.toLocaleDateString('pt-BR');
-                renderCalendar(selectedDate);
+
+            function renderYearPicker() {
+                var yearPicker = document.createElement('div');
+                yearPicker.classList.add('year-picker');
+                var selectYear = '<select onchange="selectYear(this.value)">';
+                for (var i = hoje.getFullYear() - 100; i <= hoje.getFullYear(); i++) {
+                    selectYear += `<option value="${i}" ${i === selectedYear ? 'selected' : ''}>${i}</option>`;
+                }
+                selectYear += '</select>';
+                yearPicker.innerHTML = selectYear;
+                calendar.appendChild(yearPicker);
             }
-        };
-    });
 
-    function validarFormulario() {
-        var nome = document.getElementById('nome').value;
-        var email = document.getElementById('email').value;
-        var dataNascimento = document.getElementById('dataNascimento').value;
+            window.prevMonth = function () {
+                var currentMonth = hoje.getMonth();
+                hoje.setMonth(currentMonth - 1);
+                renderCalendar(hoje);
+                renderYearPicker();
+            };
 
-        if (nome === '' || email === '' || dataNascimento === '') {
-            alert('Por favor, preencha todos os campos.');
-            return false;
+            window.nextMonth = function () {
+                var currentMonth = hoje.getMonth();
+                hoje.setMonth(currentMonth + 1);
+                renderCalendar(hoje);
+                renderYearPicker();
+            };
+
+            window.selectDate = function (day, month, year) {
+                var selectedDate = new Date(year, month, day);
+                if (selectedDate <= new Date()) {
+                    input.value = selectedDate.toLocaleDateString('pt-BR');
+                    renderCalendar(selectedDate);
+                    renderYearPicker();
+                }
+            };
+
+            window.selectYear = function (year) {
+                selectedYear = parseInt(year);
+                hoje.setFullYear(selectedYear);
+                renderCalendar(hoje);
+                renderYearPicker();
+            };
+        });
+
+        function validarFormulario() {
+            var nome = document.getElementById('nome').value;
+            var email = document.getElementById('email').value;
+            var dataNascimento = document.getElementById('dataNascimento').value;
+
+            if (nome === '' || email === '' || dataNascimento === '') {
+                alert('Por favor, preencha todos os campos.');
+                return false;
+            }
+
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Por favor, insira um endereço de email válido.');
+                return false;
+            }
+
+            if (nome.length < 3) {
+                alert('O nome deve ter pelo menos 3 caracteres.');
+                return false;
+            }
+
+            var hoje = new Date();
+            var dataParts = dataNascimento.split('/');
+            var dataNasc = new Date(dataParts[2], dataParts[1] - 1, dataParts[0]);
+
+            if (dataNasc > hoje) {
+                alert('A data de nascimento não pode ser no futuro.');
+                return false;
+            }
+
+            var idade = hoje.getFullYear() - dataNasc.getFullYear();
+            var mes = hoje.getMonth() - dataNasc.getMonth();
+            if (mes < 0 || (mes === 0 && hoje.getDate() < dataNasc.getDate())) {
+                idade--;
+            }
+
+            if (idade < 18) {
+                alert('Você deve ter pelo menos 18 anos para se registrar.');
+                return false;
+            }
+
+            return true;
         }
-
-        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            alert('Por favor, insira um endereço de email válido.');
-            return false;
-        }
-
-        if (nome.length < 3) {
-            alert('O nome deve ter pelo menos 3 caracteres.');
-            return false;
-        }
-
-        var hoje = new Date();
-        var dataParts = dataNascimento.split('/');
-        var dataNasc = new Date(dataParts[2], dataParts[1] - 1, dataParts[0]);
-
-        if (dataNasc > hoje) {
-            alert('A data de nascimento não pode ser no futuro.');
-            return false;
-        }
-
-        var idade = hoje.getFullYear() - dataNasc.getFullYear();
-        var mes = hoje.getMonth() - dataNasc.getMonth();
-        if (mes < 0 || (mes === 0 && hoje.getDate() < dataNasc.getDate())) {
-            idade--;
-        }
-
-        if (idade < 18) {
-            alert('Você deve ter pelo menos 18 anos para se registrar.');
-            return false;
-        }
-
-        return true;
-    }
-</script>
+    </script>
 
 </body>
+
 </html>
