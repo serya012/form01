@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário de Validação</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: aliceblue;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        form {
+            background-color: #1f1f1f;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        div {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input {
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: #2b2b2b;
+            color: #eee;
+        }
+        input:focus {
+            border-color: #66afe9;
+            outline: none;
+            box-shadow: 0 0 8px rgba(102, 175, 233, 0.6);
+        }
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background-color: #3b3b3b;
+            color: aliceblue;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #505050;
+        }
+        .datepicker {
+            position: relative;
+        }
+        .calendar {
+            display: none;
+            position: absolute;
+            top: 50px;
+            left: 0;
+            background-color: #2b2b2b;
+            color: #eee;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            z-index: 1000;
+            padding: 10px;
+        }
+        .calendar table {
+            width: 100%;
+        }
+        .calendar th, .calendar td {
+            text-align: center;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .calendar .prev, .calendar .next {
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-block;
+            width: 20px;
+        }
+        .calendar .prev {
+            float: left;
+        }
+        .calendar .next {
+            float: right;
+        }
+        .calendar .disabled {
+            color: #666;
+            cursor: not-allowed;
+        }
+        .calendar .active {
+            background-color: #66afe9;
+            color: #fff;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+<form onsubmit="return validarFormulario()">
+    <div>
+        <label for="nome">Digite seu nome:</label>
+        <input type="text" id="nome" required>
+        
+        <label for="email">Digite seu email:</label>
+        <input type="email" id="email" required>
+    
+        <label for="dataNascimento">Digite sua data de nascimento:</label>
+        <div class="datepicker">
+            <input type="text" id="dataNascimento" readonly required>
+            <div class="calendar" id="calendar"></div>
+        </div>
+    
+        <button type="submit">Enviar</button>
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var input = document.getElementById('dataNascimento');
+        var calendar = document.getElementById('calendar');
+        var hoje = new Date();
+        var selectedDate = null;
+        
+        input.addEventListener('focus', function() {
+            calendar.style.display = 'block';
+            renderCalendar(hoje);
+        });
+        
+        input.addEventListener('blur', function() {
+            setTimeout(function() {
+                calendar.style.display = 'none';
+            }, 200);
+        });
+        
+        function renderCalendar(date) {
+            calendar.innerHTML = '';
+            var month = date.getMonth();
+            var year = date.getFullYear();
+            var firstDay = new Date(year, month, 1);
+            var lastDay = new Date(year, month + 1, 0);
+            var daysInMonth = lastDay.getDate();
+            var startDay = firstDay.getDay();
+            var calendarHeader = `
+                <div>
+                    <span class="prev" onclick="prevMonth()">&#9664;</span>
+                    <span>${date.toLocaleString('default', { month: 'long' })} ${year}</span>
+                    <span class="next" onclick="nextMonth()">&#9654;</span>
+                </div>
+            `;
+            var calendarBody = '<table><thead><tr>';
+            var daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            for (var day of daysOfWeek) {
+                calendarBody += `<th>${day}</th>`;
+            }
+            calendarBody += '</tr></thead><tbody><tr>';
+            for (var i = 0; i < startDay; i++) {
+                calendarBody += '<td></td>';
+            }
+            for (var day = 1; day <= daysInMonth; day++) {
+                var currentDate = new Date(year, month, day);
+                var classList = '';
+                if (currentDate > hoje) {
+                    classList = 'disabled';
+                }
+                if (selectedDate && currentDate.toDateString() === selectedDate.toDateString()) {
+                    classList += ' active';
+                }
+                calendarBody += `<td class="${classList}" onclick="selectDate(${day}, ${month}, ${year})">${day}</td>`;
+                if ((startDay + day) % 7 == 0 && day != daysInMonth) {
+                    calendarBody += '</tr><tr>';
+                }
+            }
+            calendarBody += '</tr></tbody></table>';
+            calendar.innerHTML = calendarHeader + calendarBody;
+        }
+        
+        window.prevMonth = function() {
+            var currentMonth = hoje.getMonth();
+            hoje.setMonth(currentMonth - 1);
+            renderCalendar(hoje);
+        };
+        
+        window.nextMonth = function() {
+            var currentMonth = hoje.getMonth();
+            hoje.setMonth(currentMonth + 1);
+            renderCalendar(hoje);
+        };
+        
+        window.selectDate = function(day, month, year) {
+            var selectedDate = new Date(year, month, day);
+            if (selectedDate <= new Date()) {
+                input.value = selectedDate.toLocaleDateString('pt-BR');
+                renderCalendar(selectedDate);
+            }
+        };
+    });
+
+    function validarFormulario() {
+        var nome = document.getElementById('nome').value;
+        var email = document.getElementById('email').value;
+        var dataNascimento = document.getElementById('dataNascimento').value;
+
+        if (nome === '' || email === '' || dataNascimento === '') {
+            alert('Por favor, preencha todos os campos.');
+            return false;
+        }
+
+        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert('Por favor, insira um endereço de email válido.');
+            return false;
+        }
+
+        if (nome.length < 3) {
+            alert('O nome deve ter pelo menos 3 caracteres.');
+            return false;
+        }
+
+        var hoje = new Date();
+        var dataParts = dataNascimento.split('/');
+        var dataNasc = new Date(dataParts[2], dataParts[1] - 1, dataParts[0]);
+
+        if (dataNasc > hoje) {
+            alert('A data de nascimento não pode ser no futuro.');
+            return false;
+        }
+
+        var idade = hoje.getFullYear() - dataNasc.getFullYear();
+        var mes = hoje.getMonth() - dataNasc.getMonth();
+        if (mes < 0 || (mes === 0 && hoje.getDate() < dataNasc.getDate())) {
+            idade--;
+        }
+
+        if (idade < 18) {
+            alert('Você deve ter pelo menos 18 anos para se registrar.');
+            return false;
+        }
+
+        return true;
+    }
+</script>
+
+</body>
+</html>
